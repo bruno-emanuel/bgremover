@@ -4,6 +4,8 @@ from typing import Literal, cast
 from PIL import Image
 from rembg import new_session, remove  # pyright: ignore
 
+from bgremover.constants import ALLOWED_EXTENSIONS
+
 # Comparativo dos modelos testados:
 # "u2net_human_seg" → bom equilíbrio, rápido, mas erra detalhes finos (3º lugar)
 # "birefnet-general" → acerta mais que o u2net, mas ainda deixa passar erros (2º lugar)
@@ -12,13 +14,6 @@ from rembg import new_session, remove  # pyright: ignore
 # -> from rembg.bg import sessions
 # -> print(sessions.keys())
 
-# Duplicating the model list for runtime (values) and static typing (Literal)
-# because:
-# 1. Literal[*models] breaks static analysis (Pyright hates it)
-# 2. Runtime introspection is needed elsewhere (e.g., CLI choices)
-# 3. This strikes the balance between performance, type safety, and readability
-#
-# Yes, it's duplicated. No, it's not a mistake. I really tried
 type Models = Literal[
     "u2net",
     "u2netp",
@@ -63,9 +58,14 @@ models = (
 
 
 def remove_bg(
-    in_img_path: Path, out_dir: Path, model: Models = "birefnet-portrait"
+    in_img_path: Path,
+    out_dir: Path,
+    model: Models = "birefnet-portrait",
+    session: any = None,
 ) -> Path:
-    session = new_session(model)
+    if session is None:
+        session = new_session(model)
+
     input_img: Image.Image = Image.open(in_img_path)
 
     pil_out_img = cast(
@@ -102,72 +102,3 @@ def remove_bg(
     out_img_path = out_dir / new_img_name
     pil_out_img.save(out_img_path)
     return out_img_path
-
-
-allowed_extensions = [
-    ".blp",
-    ".bmp",
-    ".bufr",
-    ".cur",
-    ".dcx",
-    ".dds",
-    ".dib",
-    ".eps",
-    ".ps",
-    ".fit",
-    ".fits",
-    ".flc",
-    ".fli",
-    ".ftc",
-    ".ftu",
-    ".gbr",
-    ".gif",
-    ".grib",
-    ".h5",
-    ".hdf",
-    ".icns",
-    ".ico",
-    ".im",
-    ".iim",
-    ".jfif",
-    ".jpe",
-    ".jpeg",
-    ".jpg",
-    ".j2c",
-    ".j2k",
-    ".jp2",
-    ".jpc",
-    ".jpf",
-    ".jpx",
-    ".mpeg",
-    ".mpg",
-    ".msp",
-    ".pcd",
-    ".pcx",
-    ".pxr",
-    ".apng",
-    ".png",
-    ".pbm",
-    ".pfm",
-    ".pgm",
-    ".pnm",
-    ".ppm",
-    ".psd",
-    ".qoi",
-    ".bw",
-    ".rgb",
-    ".rgba",
-    ".sgi",
-    ".ras",
-    ".icb",
-    ".tga",
-    ".vda",
-    ".vst",
-    ".tif",
-    ".tiff",
-    ".webp",
-    ".emf",
-    ".wmf",
-    ".xbm",
-    ".xpm",
-]

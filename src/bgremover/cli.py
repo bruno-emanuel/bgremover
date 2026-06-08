@@ -55,6 +55,14 @@ def run_with_args() -> None:
     process_many_parser.set_defaults(command="process_images")
 
     args = parser.parse_args()
+
+    # Validação extra baseada no comando
+    if args.command == "process_image" and not args.input.is_file():
+        parser.error(f"🔴 The 'one' command requires a file as input, but a directory was given: {args.input}")
+    
+    if args.command == "process_images" and not args.input.is_dir():
+        parser.error(f"🔴 The 'many' command requires a directory as input, but a file was given: {args.input}")
+
     COMMANDS[args.command](args.input, args.output, args.model)
 
 
